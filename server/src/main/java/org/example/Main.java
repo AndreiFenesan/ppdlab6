@@ -1,19 +1,13 @@
 package org.example;
 
-import org.example.api.BatchOfCompetitiorResult;
-import org.example.api.CompetitorResult;
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main {
@@ -33,10 +27,12 @@ public class Main {
 
     public static void main(String[] args) throws InterruptedException, IOException, ClassNotFoundException {
 
-        ServerSocket socket = new ServerSocket(9999);
+        ServerSocket socket = new ServerSocket(9998);
         Socket client = socket.accept();
+        System.out.println("Connection accepted");
         var is = new ObjectInputStream(client.getInputStream());
         var results = (BatchOfCompetitiorResult) is.readObject();
+        System.out.println(results.getResultList().size());
 
 
         var filesFinished = new AtomicInteger(0);
@@ -103,9 +99,9 @@ public class Main {
 //            }
 //        });
 
-        linkedList.showPodium(outputPath);
-
-        var end = System.currentTimeMillis();
-        System.out.println(end - start);
+//        linkedList.showPodium(outputPath);
+//
+//        var end = System.currentTimeMillis();
+//        System.out.println(end - start);
     }
 }
