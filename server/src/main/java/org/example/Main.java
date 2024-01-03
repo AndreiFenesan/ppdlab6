@@ -1,6 +1,12 @@
 package org.example;
 
+import org.example.api.BatchOfCompetitiorResult;
+import org.example.api.CompetitorResult;
+
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -25,7 +31,14 @@ public class Main {
         }
     }
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, IOException, ClassNotFoundException {
+
+        ServerSocket socket = new ServerSocket(9999);
+        Socket client = socket.accept();
+        var is = new ObjectInputStream(client.getInputStream());
+        var results = (BatchOfCompetitiorResult) is.readObject();
+
+
         var filesFinished = new AtomicInteger(0);
         int workingThreads = 4;
         String basePath = "/home/andrei/Desktop/an3_sem1/prog_paralela_si_distribuita/lab4/inputData/";
@@ -38,23 +51,23 @@ public class Main {
 
         var start = System.currentTimeMillis();
 
-        for (int i = 1; i <= 5; i++) {
-            for (int j = 1; j <= 10; j++) {
-                var path = basePath + "RezultateC" + i + "_P" + j + ".txt";
-                int finalI = i;
-                readThreads.execute(() -> {
-                    try {
-                        readFileAndAddToQueue(blockingQueue, path, "C" + finalI);
-                        var count = filesFinished.incrementAndGet();
-                        if (count == 50) {
-                            blockingQueue.signal();
-                        }
-                    } catch (IOException e) {
-                        System.out.println("ERROR thr");
-                    }
-                });
-            }
-        }
+//        for (int i = 1; i <= 5; i++) {
+//            for (int j = 1; j <= 10; j++) {
+//                var path = basePath + "RezultateC" + i + "_P" + j + ".txt";
+//                int finalI = i;
+//                readThreads.execute(() -> {
+//                    try {
+//                        readFileAndAddToQueue(blockingQueue, path, "C" + finalI);
+//                        var count = filesFinished.incrementAndGet();
+//                        if (count == 50) {
+//                            blockingQueue.signal();
+//                        }
+//                    } catch (IOException e) {
+//                        System.out.println("ERROR thr");
+//                    }
+//                });
+//            }
+//        }
 
         var thrArr = new ArrayList<Thread>();
         var fraud = new ConcurrentHashMap<Integer, Boolean>();
