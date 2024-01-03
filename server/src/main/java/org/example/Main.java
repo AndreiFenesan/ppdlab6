@@ -69,39 +69,39 @@ public class Main {
 //            }
 //        }
 
-        var thrArr = new ArrayList<Thread>();
-        var fraud = new ConcurrentHashMap<Integer, Boolean>();
-        for (int i = 0; i < workingThreads; i++) {
-            Thread thr = new Thread(() -> {
-                Node node;
-                do {
-                    node = blockingQueue.pool();
-                    if (node != null) {
-                        if (node.totalScore > 0) {
-                            linkedList.add(node);
-                        } else {
-                            if (fraud.get(node.id) == null) {
-                                //not fraud before
-                                linkedList.deleteNodeWithId(node.id);
-                                fraud.put(node.id, true);
-                            }
-                        }
-                    }
-                } while (node != null);
-            });
-            thr.start();
-            thrArr.add(thr);
-        }
+//        var thrArr = new ArrayList<Thread>();
+//        var fraud = new ConcurrentHashMap<Integer, Boolean>();
+//        for (int i = 0; i < workingThreads; i++) {
+//            Thread thr = new Thread(() -> {
+//                Node node;
+//                do {
+//                    node = blockingQueue.pool();
+//                    if (node != null) {
+//                        if (node.totalScore > 0) {
+//                            linkedList.add(node);
+//                        } else {
+//                            if (fraud.get(node.id) == null) {
+//                                //not fraud before
+//                                linkedList.deleteNodeWithId(node.id);
+//                                fraud.put(node.id, true);
+//                            }
+//                        }
+//                    }
+//                } while (node != null);
+//            });
+//            thr.start();
+//            thrArr.add(thr);
+//        }
 
-        readThreads.shutdown();
-        while (!readThreads.awaitTermination(10, TimeUnit.SECONDS)) ;
-        thrArr.forEach(thread -> {
-            try {
-                thread.join();
-            } catch (Exception e) {
-                System.out.println("Error in waiting");
-            }
-        });
+//        readThreads.shutdown();
+//        while (!readThreads.awaitTermination(10, TimeUnit.SECONDS)) ;
+//        thrArr.forEach(thread -> {
+//            try {
+//                thread.join();
+//            } catch (Exception e) {
+//                System.out.println("Error in waiting");
+//            }
+//        });
 
         linkedList.showPodium(outputPath);
 
