@@ -11,14 +11,17 @@ public class Main {
     public static void main(String[] args) {
         var resultsFolder = args[0];
         var country = args[1];
+        var deltaX = Integer.parseInt(args[2]);
 
         FileReader fileReader = new FileReader();
 
         List<CompetitorResult> competitorResults = new ArrayList<>();
         for (int i = 1; i <= 1; i++) {
-                var path = resultsFolder + "ResultC" + "_P" + i + ".txt";
+                var path = resultsFolder + "\\" + country + "\\" + "ResultC" + "_P" + i + ".txt";
                 fileReader.readFileAndAddToList(competitorResults, path, country);
             }
+
+        System.out.println(competitorResults.size());
 
         try(Socket clientSocket = new Socket("localhost", 9998)) {
             BatchOfCompetitiorResult batchOfCompetitorResults = new BatchOfCompetitiorResult();
@@ -38,6 +41,13 @@ public class Main {
 
                 objectOutputStream.writeObject(batchOfCompetitorResults);
                 objectOutputStream.flush();
+
+                try {
+                    Thread.sleep(2000); // Sleep for 2 seconds (2000 milliseconds)
+                } catch (InterruptedException e) {
+                    // Handle interruption if needed
+                    e.printStackTrace();
+                }
             }
 
             //sends empty list to know it ended
@@ -48,7 +58,7 @@ public class Main {
             objectOutputStream.flush();
 
         }catch (IOException exception) {
-            System.out.println(exception.getMessage());
+            System.out.println(exception);
         }
     }
 }

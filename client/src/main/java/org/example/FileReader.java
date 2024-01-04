@@ -1,27 +1,32 @@
 package org.example;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.net.URL;
 import java.util.List;
+import java.util.Scanner;
 
 public class FileReader {
 
     public void readFileAndAddToList(List<CompetitorResult> competitorResults, String fileName, String country) {
-        var filePath = Paths.get(fileName);
-        try (var buff = Files.newBufferedReader(filePath)) {
-            buff.lines()
-                    .forEach(line -> {
-                        var data = line.split(",");
 
-                        CompetitorResult node = new CompetitorResult();
-                        node.setId(Integer.parseInt(data[0]));
-                        node.setScore(Integer.parseInt(data[1]));
-                        node.setCountry(country);
+        File fileObj = new File(fileName);
+        try(Scanner scanner = new Scanner(fileObj)){
 
-                        competitorResults.add(node);
-                    });
-        } catch (Exception e) {
-            System.out.println(e);
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine();
+                line = line.replace("\n", "");
+                var data = line.split(",");
+
+                CompetitorResult node = new CompetitorResult();
+                node.setId(Integer.parseInt(data[0]));
+                node.setScore(Integer.parseInt(data[1]));
+                node.setCountry(country);
+
+                competitorResults.add(node);
+            }
+        } catch (FileNotFoundException exception) {
+            System.out.println(exception);
         }
     }
 }
