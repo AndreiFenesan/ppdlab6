@@ -17,30 +17,30 @@ public class Main {
 
         List<CompetitorResult> competitorResults = new ArrayList<>();
         for (int i = 1; i <= 1; i++) {
-                var path = resultsFolder + "\\" + country + "\\" + "ResultC" + "_P" + i + ".txt";
-                fileReader.readFileAndAddToList(competitorResults, path, country);
-            }
+            var path = resultsFolder + "/" + country + "/" + "ResultC" + "_P" + i + ".txt";
+            fileReader.readFileAndAddToList(competitorResults, path, country);
+        }
 
         System.out.println(competitorResults.size());
 
-        try(Socket clientSocket = new Socket("localhost", 9998)) {
+        try (Socket clientSocket = new Socket("localhost", 9998)) {
             BatchOfCompetitiorResult batchOfCompetitorResults = new BatchOfCompetitiorResult();
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(clientSocket.getOutputStream());
 
-            for(int i = 0; i < competitorResults.size()/20; i++) {
-                int counter = 0;
-                List<CompetitorResult> resultList = new ArrayList<>();
+            int noTimes = competitorResults.size() % 20 == 0 ?
+                    competitorResults.size() / 20 : competitorResults.size() / 20 + 1;
+            for (int i = 0; i < noTimes; i++) {
+                List<CompetitorResult> resultList =
+                        competitorResults.subList(i * 20,
+                                Math.min((i + 1) * 20, competitorResults.size()));
 
-                while(counter < 20 && !competitorResults.isEmpty()){
-                    resultList.add(competitorResults.get(0));
-                    competitorResults.remove(0);
-                    counter++;
-                }
-
-                batchOfCompetitorResults.setResultList(resultList);
-
+                ArrayList<CompetitorResult> toSend = new ArrayList<>(resultList);
+                batchOfCompetitorResults.setResultList(toSend);
+                System.out.println("Sending batch of: " + resultList.size());
                 objectOutputStream.writeObject(batchOfCompetitorResults);
                 objectOutputStream.flush();
+                objectOutputStream.reset();
+                System.out.println("Sent batch of: " + resultList.size() + " success");
 
                 try {
                     Thread.sleep(2000); // Sleep for 2 seconds (2000 milliseconds)
@@ -56,8 +56,14 @@ public class Main {
 
             objectOutputStream.writeObject(batchOfCompetitorResults);
             objectOutputStream.flush();
+            try {
+                Thread.sleep(2000); // Sleep for 2 seconds (2000 milliseconds)
+            } catch (InterruptedException e) {
+                // Handle interruption if needed
+                e.printStackTrace();
+            }
 
-        }catch (IOException exception) {
+        } catch (IOException exception) {
             System.out.println(exception);
         }
     }

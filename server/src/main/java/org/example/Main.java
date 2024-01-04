@@ -26,24 +26,17 @@ public class Main {
     }
 
     public static void main(String[] args) throws InterruptedException, IOException, ClassNotFoundException {
-
-        ServerSocket socket = new ServerSocket(9998);
-        Socket client = socket.accept();
-        System.out.println("Connection accepted");
-        var is = new ObjectInputStream(client.getInputStream());
-        var results = (BatchOfCompetitiorResult) is.readObject();
-        System.out.println(results.getResultList().size());
-
-
         var filesFinished = new AtomicInteger(0);
-        int workingThreads = 4;
-        String basePath = "/home/andrei/Desktop/an3_sem1/prog_paralela_si_distribuita/lab4/inputData/";
-        String outputPath = "/home/andrei/Desktop/an3_sem1/prog_paralela_si_distribuita/lab5/outputData/work2.txt";
-
         MyBlockingQueue blockingQueue = new MyBlockingQueue(filesFinished, 100);
         MyLinkedList linkedList = new MyLinkedList();
 
         ExecutorService readThreads = Executors.newFixedThreadPool(12);
+        ExecutorService writeThreads = Executors.newFixedThreadPool(12);
+        ServerSocket socket = new ServerSocket(9998);
+        ConnectionManager connectionManager = new ConnectionManager(readThreads, writeThreads, socket, blockingQueue);
+        connectionManager.startListening();
+
+        connectionManager.waitForClients();
 
         var start = System.currentTimeMillis();
 
