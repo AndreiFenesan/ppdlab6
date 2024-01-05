@@ -45,11 +45,15 @@ public class ServerMessenger {
             }
         }
 
-        //sends empty list to know it ended
-        List<CompetitorResult> resultList = new ArrayList<>();
-        batchOfCompetitorResults.setResultList(resultList);
+    }
 
-        objectOutputStream.writeObject(batchOfCompetitorResults);
+    public void sendProvisionalPodiumRequest() throws IOException {
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(clientSocket.getOutputStream());
+        System.out.println("Sending request for podium");
+        objectOutputStream.writeObject(new GetPodiumRequest());
         objectOutputStream.flush();
+        objectOutputStream.reset();
+        System.out.println("Sent request for podium success");
+
     }
 }

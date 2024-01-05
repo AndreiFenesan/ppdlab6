@@ -29,6 +29,8 @@ public class Main {
 
                 serverMessenger.sendBatchToServer();
 
+                serverMessenger.sendProvisionalPodiumRequest();
+
                 try {
                     Thread.sleep(2000); // Sleep for 2 seconds (2000 milliseconds)
                 } catch (InterruptedException e) {
