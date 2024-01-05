@@ -20,7 +20,7 @@ public class Main {
             for (int i = 1; i <= numberOfFiles; i++) {
                 List<CompetitorResult> competitorResults = new ArrayList<>();
 
-                var path = resultsFolder + "\\" + country + "\\" + "ResultC" + "_P" + i + ".txt";
+                var path = resultsFolder + "/" + country + "/" + "ResultC" + "_P" + i + ".txt";
                 fileReader.readFileAndAddToList(competitorResults, path, country);
 
                 System.out.println(competitorResults.size());

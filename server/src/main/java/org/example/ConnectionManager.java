@@ -33,19 +33,15 @@ public class ConnectionManager {
                     readThreads.submit(() -> {
                         try {
                             ObjectInputStream inputStream = new ObjectInputStream(client.getInputStream());
-                            BatchOfCompetitiorResult receivedData;
+                            Object data;
                             do {
-                                var data = inputStream.readObject();
-                                receivedData = (BatchOfCompetitiorResult) data;
-                                var results = receivedData.getResultList();
-                                System.out.println("Received size of: " + results.size());
-                                if (!results.isEmpty()) {
-                                    for (var result : results) {
-                                        myBlockingQueue.addToQueue(
-                                                new Node(result.getId(), result.getScore(), result.getCountry()));
-                                    }
+                                data = inputStream.readObject();
+                                if (data instanceof BatchOfCompetitiorResult receivedData) {
+                                    handleBatchResult(receivedData);
+                                } else if (data instanceof GetPodiumRequest) {
+                                    System.out.println("Request received");
                                 }
-                            } while (!receivedData.getResultList().isEmpty());
+                            } while (!(data instanceof DoneRequest));
                         } catch (IOException e) {
                             System.out.println("Error in reading from socket " + e.getMessage());
                         } catch (ClassNotFoundException e) {
@@ -64,6 +60,17 @@ public class ConnectionManager {
         });
         this.worker = thread;
         thread.start();
+    }
+
+    private void handleBatchResult(BatchOfCompetitiorResult receivedData) {
+        var results = receivedData.getResultList();
+        System.out.println("Received size of: " + results.size());
+        if (!results.isEmpty()) {
+            for (var result : results) {
+                myBlockingQueue.addToQueue(
+                        new Node(result.getId(), result.getScore(), result.getCountry()));
+            }
+        }
     }
 
     public void waitForClients() {
