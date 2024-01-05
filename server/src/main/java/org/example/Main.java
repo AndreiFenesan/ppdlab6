@@ -6,6 +6,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -26,17 +28,16 @@ public class Main {
     }
 
     public static void main(String[] args) throws InterruptedException, IOException, ClassNotFoundException {
-        var filesFinished = new AtomicInteger(0);
-        MyBlockingQueue blockingQueue = new MyBlockingQueue(filesFinished, 100);
+        int noClients = 1;
+        int workingThreads = 4;
+        var finishedClients = new AtomicInteger(0);
+        MyBlockingQueue blockingQueue = new MyBlockingQueue(finishedClients, 100, noClients);
         MyLinkedList linkedList = new MyLinkedList();
 
         ExecutorService readThreads = Executors.newFixedThreadPool(12);
-        ExecutorService writeThreads = Executors.newFixedThreadPool(12);
         ServerSocket socket = new ServerSocket(9998);
-        ConnectionManager connectionManager = new ConnectionManager(readThreads, writeThreads, socket, blockingQueue);
+        ConnectionManager connectionManager = new ConnectionManager(readThreads, finishedClients, socket, blockingQueue, noClients);
         connectionManager.startListening();
-
-        connectionManager.waitForClients();
 
         var start = System.currentTimeMillis();
 
@@ -47,7 +48,7 @@ public class Main {
 //                readThreads.execute(() -> {
 //                    try {
 //                        readFileAndAddToQueue(blockingQueue, path, "C" + finalI);
-//                        var count = filesFinished.incrementAndGet();
+//                        var count = finishedClients.incrementAndGet();
 //                        if (count == 50) {
 //                            blockingQueue.signal();
 //                        }
@@ -58,39 +59,43 @@ public class Main {
 //            }
 //        }
 
-//        var thrArr = new ArrayList<Thread>();
-//        var fraud = new ConcurrentHashMap<Integer, Boolean>();
-//        for (int i = 0; i < workingThreads; i++) {
-//            Thread thr = new Thread(() -> {
-//                Node node;
-//                do {
-//                    node = blockingQueue.pool();
-//                    if (node != null) {
-//                        if (node.totalScore > 0) {
-//                            linkedList.add(node);
-//                        } else {
-//                            if (fraud.get(node.id) == null) {
-//                                //not fraud before
-//                                linkedList.deleteNodeWithId(node.id);
-//                                fraud.put(node.id, true);
-//                            }
-//                        }
-//                    }
-//                } while (node != null);
-//            });
-//            thr.start();
-//            thrArr.add(thr);
-//        }
+        var thrArr = new ArrayList<Thread>();
+        var fraud = new ConcurrentHashMap<Integer, Boolean>();
+        for (int i = 0; i < workingThreads; i++) {
+            Thread thr = new Thread(() -> {
+                Node node;
+                do {
+                    node = blockingQueue.pool();
+                    if (node != null) {
+                        if (node.totalScore > 0) {
+                            linkedList.add(node);
+                        } else {
+                            if (fraud.get(node.id) == null) {
+                                //not fraud before
+                                linkedList.deleteNodeWithId(node.id);
+                                fraud.put(node.id, true);
+                            }
+                        }
+                    }
+                } while (node != null);
+            });
+            thr.start();
+            thrArr.add(thr);
+        }
 
 //        readThreads.shutdown();
 //        while (!readThreads.awaitTermination(10, TimeUnit.SECONDS)) ;
-//        thrArr.forEach(thread -> {
-//            try {
-//                thread.join();
-//            } catch (Exception e) {
-//                System.out.println("Error in waiting");
-//            }
-//        });
+        blockingQueue.signal();
+        thrArr.forEach(thread -> {
+            try {
+                thread.join();
+            } catch (Exception e) {
+                System.out.println("Error in waiting");
+            }
+        });
+        connectionManager.waitForClients();
+
+        System.out.println("Main thread done");
 
 //        linkedList.showPodium(outputPath);
 //

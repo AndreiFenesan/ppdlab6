@@ -7,20 +7,22 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class MyBlockingQueue {
+    private final int noClients;
     private final Queue<Node> nodes;
     private ReentrantLock lock;
     private Condition notEmpty;
     private Condition notFull;
-    private AtomicInteger noReadFiles;
+    private AtomicInteger noFinishedClients;
     private int maxCapacity;
 
-    public MyBlockingQueue(AtomicInteger noReadFiles, int maxCapacity) {
+    public MyBlockingQueue(AtomicInteger noFinishedClients, int maxCapacity, int noClients) {
         nodes = new ArrayDeque<>();
         lock = new ReentrantLock();
         notEmpty = lock.newCondition();
         notFull = lock.newCondition();
-        this.noReadFiles = noReadFiles;
+        this.noFinishedClients = noFinishedClients;
         this.maxCapacity = maxCapacity;
+        this.noClients = noClients;
     }
 
     public void addToQueue(Node node) {
@@ -44,21 +46,36 @@ public class MyBlockingQueue {
         lock.unlock();
     }
 
+    //    public Node pool() {
+//        lock.lock();
+//        try {
+//            if (noReadFiles.get() < 1) {
+//                while (nodes.isEmpty() && noReadFiles.get() < 1) {
+//                    notEmpty.await();
+//                }
+//                notFull.signalAll();
+//                return nodes.poll();
+//            } else {
+//                if (!nodes.isEmpty()) {
+//                    return nodes.poll();
+//                }
+//            }
+//        } catch (InterruptedException e) {
+//            System.out.println(e);
+//        } finally {
+//            lock.unlock();
+//        }
+//        return null;
+//    }
     public Node pool() {
         lock.lock();
         try {
-            if (noReadFiles.get() < 50) {
-                while (nodes.isEmpty() && noReadFiles.get() < 50) {
-                    notEmpty.await();
-
-                }
-                notFull.signalAll();
-                return nodes.poll();
-            } else {
-                if (!nodes.isEmpty()) {
-                    return nodes.poll();
-                }
+            while (nodes.isEmpty() && noFinishedClients.get() < noClients) {
+                notEmpty.await();
             }
+            var elem = nodes.poll();
+            notFull.signalAll();
+            return elem;
         } catch (InterruptedException e) {
             System.out.println(e);
         } finally {

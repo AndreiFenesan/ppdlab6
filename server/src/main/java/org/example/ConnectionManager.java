@@ -5,26 +5,27 @@ import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ConnectionManager {
+    private int noClients;
     private final ExecutorService readThreads;
-    private final ExecutorService workerThreads;
+    private final AtomicInteger finishedClients;
     private final ServerSocket serverSocket;
     private final MyBlockingQueue myBlockingQueue;
     private Thread worker;
 
-    public ConnectionManager(ExecutorService readThreads, ExecutorService workerThreads, ServerSocket serverSocket, MyBlockingQueue myBlockingQueue) {
+    public ConnectionManager(ExecutorService readThreads, AtomicInteger finishedClients, ServerSocket serverSocket, MyBlockingQueue myBlockingQueue, int noClients) {
         this.readThreads = readThreads;
-        this.workerThreads = workerThreads;
+        this.finishedClients = finishedClients;
         this.serverSocket = serverSocket;
         this.myBlockingQueue = myBlockingQueue;
+        this.noClients = noClients;
     }
 
 
     public void startListening() {
         Thread thread = new Thread(() -> {
-            int noClients = 1;
-
             while (noClients > 0) {
                 try {
                     Socket client = serverSocket.accept();
@@ -40,8 +41,8 @@ public class ConnectionManager {
                                 System.out.println("Received size of: " + results.size());
                                 if (!results.isEmpty()) {
                                     for (var result : results) {
-                                        workerThreads.submit(() -> myBlockingQueue.addToQueue(
-                                                new Node(result.getId(), result.getScore(), result.getCountry())));
+                                        myBlockingQueue.addToQueue(
+                                                new Node(result.getId(), result.getScore(), result.getCountry()));
                                     }
                                 }
                             } while (!receivedData.getResultList().isEmpty());
@@ -51,20 +52,25 @@ public class ConnectionManager {
                             System.out.println("Error class not found");
                         }
                         System.out.println("Finished reading from client");
+                        finishedClients.incrementAndGet();
+                        myBlockingQueue.signal();
                     });
                 } catch (IOException e) {
                     System.out.println("Error in opening client connection");
                 }
-                noClients--;
+                this.noClients--;
             }
+            System.out.println("Server received data from all clients");
         });
         this.worker = thread;
         thread.start();
     }
 
     public void waitForClients() {
+        System.out.println("Waiting for worker to finish");
         try {
             this.worker.join();
+            System.out.println("Worker finished");
         } catch (InterruptedException e) {
             System.out.println("Error in waiting for thread");
         }
