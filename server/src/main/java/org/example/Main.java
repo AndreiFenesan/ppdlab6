@@ -1,9 +1,7 @@
 package org.example;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.net.ServerSocket;
-import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -28,7 +26,7 @@ public class Main {
     }
 
     public static void main(String[] args) throws InterruptedException, IOException, ClassNotFoundException {
-        int noClients = 1;
+        int noClients = 2;
         int workingThreads = 4;
         var finishedClients = new AtomicInteger(0);
         MyBlockingQueue blockingQueue = new MyBlockingQueue(finishedClients, 100, noClients);
@@ -82,7 +80,6 @@ public class Main {
             thr.start();
             thrArr.add(thr);
         }
-
 //        readThreads.shutdown();
 //        while (!readThreads.awaitTermination(10, TimeUnit.SECONDS)) ;
         blockingQueue.signal();

@@ -8,12 +8,14 @@ public class LockingNode {
     private String country;
     private LockingNode next;
     private ReentrantLock lock;
+    private final ReentrantLock podiumLock;
 
-    public LockingNode(int id, int score, String country) {
+    public LockingNode(int id, int score, String country, ReentrantLock podiumLock) {
         this.id = id;
         totalValue = score;
         lock = new ReentrantLock();
         this.country = country;
+        this.podiumLock = podiumLock;
     }
 
     public int getTotalValue() {
@@ -46,15 +48,17 @@ public class LockingNode {
 
     public void lock() {
         lock.lock();
+        podiumLock.lock();
     }
 
     public void unlock() {
         lock.unlock();
+        podiumLock.unlock();
     }
 
     @Override
     public String toString() {
         return """
-                 id: %d name: %s, counrty: %s""".formatted(id, totalValue, country);
+                id: %d name: %s, counrty: %s""".formatted(id, totalValue, country);
     }
 }
