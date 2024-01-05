@@ -2,5 +2,5 @@ package org.example;
 
 import java.io.Serializable;
 
-public class DoneRequest implements Request {
+public interface Request extends Serializable {
 }

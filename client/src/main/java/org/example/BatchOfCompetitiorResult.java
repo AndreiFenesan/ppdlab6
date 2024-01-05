@@ -3,7 +3,7 @@ package org.example;
 import java.io.Serializable;
 import java.util.List;
 
-public class BatchOfCompetitiorResult implements Serializable {
+public class BatchOfCompetitiorResult implements Request {
     private List<CompetitorResult> resultList;
 
     public BatchOfCompetitiorResult() {
