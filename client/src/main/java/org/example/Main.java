@@ -20,6 +20,8 @@ public class Main {
         try (Socket clientSocket = new Socket("localhost", 9998)) {
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(clientSocket.getOutputStream());
             ObjectInputStream objectInputStream = new ObjectInputStream(clientSocket.getInputStream());
+
+            ServerMessenger serverMessenger = new ServerMessenger(objectOutputStream, objectInputStream);
             for (int i = 1; i <= numberOfFiles; i++) {
                 List<CompetitorResult> competitorResults = new ArrayList<>();
 
@@ -29,7 +31,7 @@ public class Main {
 
                 System.out.println(competitorResults.size());
 
-                ServerMessenger serverMessenger = new ServerMessenger(objectOutputStream, objectInputStream, competitorResults);
+                serverMessenger.setCompetitorResults(competitorResults);
 
                 serverMessenger.sendBatchToServer();
 
@@ -49,6 +51,24 @@ public class Main {
                 }
 
             }
+
+            serverMessenger.sendFinalResultsRequest();
+
+            var finalResultsResponse = serverMessenger.receiveFinalResultsResponse();
+
+            var countryResults = finalResultsResponse.getCountryResults();
+            var contestantsResults = finalResultsResponse.getCompetitorsResultList();
+
+            for (var result: countryResults) {
+                System.out.println(result.getCountry() + ": " + result.getTotalScore());
+            }
+
+            for (var result: contestantsResults) {
+                System.out.println(result.getId() + ": " + result.getScore() + " - " + result.getCountry());
+            }
+
+            serverMessenger.sendDoneRequest();
+
         } catch (IOException | ClassNotFoundException exception) {
             System.out.println(exception);
         }

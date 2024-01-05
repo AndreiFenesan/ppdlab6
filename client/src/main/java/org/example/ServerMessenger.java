@@ -11,12 +11,16 @@ public class ServerMessenger {
 
     ObjectOutputStream objectOutputStream;
     ObjectInputStream objectInputStream;
+
+    public void setCompetitorResults(List<CompetitorResult> competitorResults) {
+        this.competitorResults = competitorResults;
+    }
+
     List<CompetitorResult> competitorResults;
 
-    public ServerMessenger(ObjectOutputStream objectOutputStream, ObjectInputStream objectInputStream, List<CompetitorResult> competitorResults) {
+    public ServerMessenger(ObjectOutputStream objectOutputStream, ObjectInputStream objectInputStream) {
         this.objectOutputStream = objectOutputStream;
         this.objectInputStream = objectInputStream;
-        this.competitorResults = competitorResults;
     }
 
     public void sendBatchToServer() throws IOException {
@@ -64,5 +68,30 @@ public class ServerMessenger {
         System.out.println("Received response for podium success");
 
         return ((GetPodiumResponse) podiumResponse).getResults();
+    }
+
+    public void sendFinalResultsRequest() throws IOException {
+        System.out.println("Sending request for final results");
+        objectOutputStream.writeObject(new GetFinalResultsRequests());
+        objectOutputStream.flush();
+        objectOutputStream.reset();
+        System.out.println("Sent request for final results");
+    }
+
+    public GetFinalResultsResponse receiveFinalResultsResponse() throws IOException, ClassNotFoundException {
+        System.out.println("Receiving response for podium");
+        Object finalResultsResponse;
+        finalResultsResponse = objectInputStream.readObject();
+        System.out.println("Received response for podium success");
+
+        return ((GetFinalResultsResponse) finalResultsResponse);
+    }
+
+    public void sendDoneRequest() throws IOException {
+        System.out.println("Sending request for ending communication");
+        objectOutputStream.writeObject(new DoneRequest());
+        objectOutputStream.flush();
+        objectOutputStream.reset();
+        System.out.println("Sent request for ending communication");
     }
 }
