@@ -1,6 +1,7 @@
 package org.example;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -9,11 +10,13 @@ import java.util.List;
 public class ServerMessenger {
 
     ObjectOutputStream objectOutputStream;
+    ObjectInputStream objectInputStream;
     List<CompetitorResult> competitorResults;
 
-    public ServerMessenger(ObjectOutputStream objectOutputStream, List<CompetitorResult> competitorResults)
+    public ServerMessenger(ObjectOutputStream objectOutputStream, ObjectInputStream objectInputStream, List<CompetitorResult> competitorResults)
     {
         this.objectOutputStream = objectOutputStream;
+        this.objectInputStream = objectInputStream;
         this.competitorResults = competitorResults;
     }
 
@@ -52,6 +55,15 @@ public class ServerMessenger {
         objectOutputStream.flush();
         objectOutputStream.reset();
         System.out.println("Sent request for podium success");
+    }
 
+    public List<CountryResult> receiveProvisionPodiumRequest() throws IOException, ClassNotFoundException {
+
+        System.out.println("Receiving response for podium");
+        Object podiumResponse;
+        podiumResponse = objectInputStream.readObject();
+        System.out.println("Received response for podium success");
+
+        return (List<CountryResult>)podiumResponse;
     }
 }

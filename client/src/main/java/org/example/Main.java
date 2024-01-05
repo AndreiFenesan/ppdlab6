@@ -1,6 +1,7 @@
 package org.example;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -17,6 +18,8 @@ public class Main {
         FileReader fileReader = new FileReader();
 
         try (Socket clientSocket = new Socket("localhost", 9998)) {
+            ObjectOutputStream objectOutputStream = new ObjectOutputStream(clientSocket.getOutputStream());
+            ObjectInputStream objectInputStream = new ObjectInputStream(clientSocket.getInputStream());
             for (int i = 1; i <= numberOfFiles; i++) {
                 List<CompetitorResult> competitorResults = new ArrayList<>();
 
@@ -25,12 +28,18 @@ public class Main {
                 fileReader.readFileAndAddToList(competitorResults, path, country);
 
                 System.out.println(competitorResults.size());
-                ObjectOutputStream objectOutputStream = new ObjectOutputStream(clientSocket.getOutputStream());
-                ServerMessenger serverMessenger = new ServerMessenger(objectOutputStream, competitorResults);
+
+                ServerMessenger serverMessenger = new ServerMessenger(objectOutputStream, objectInputStream, competitorResults);
 
                 serverMessenger.sendBatchToServer();
 
                 serverMessenger.sendProvisionalPodiumRequest();
+
+                var podiumResults = serverMessenger.receiveProvisionPodiumRequest();
+
+                for (var result: podiumResults) {
+                    System.out.println(result.getCountry() +": " + result.getTotalScore());
+                }
 
                 try {
                     Thread.sleep(2000); // Sleep for 2 seconds (2000 milliseconds)
@@ -40,7 +49,7 @@ public class Main {
                 }
 
             }
-        } catch (IOException exception) {
+        } catch (IOException | ClassNotFoundException exception) {
             System.out.println(exception);
         }
     }
