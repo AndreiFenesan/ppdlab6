@@ -13,8 +13,7 @@ public class ServerMessenger {
     ObjectInputStream objectInputStream;
     List<CompetitorResult> competitorResults;
 
-    public ServerMessenger(ObjectOutputStream objectOutputStream, ObjectInputStream objectInputStream, List<CompetitorResult> competitorResults)
-    {
+    public ServerMessenger(ObjectOutputStream objectOutputStream, ObjectInputStream objectInputStream, List<CompetitorResult> competitorResults) {
         this.objectOutputStream = objectOutputStream;
         this.objectInputStream = objectInputStream;
         this.competitorResults = competitorResults;
@@ -64,6 +63,6 @@ public class ServerMessenger {
         podiumResponse = objectInputStream.readObject();
         System.out.println("Received response for podium success");
 
-        return (List<CountryResult>)podiumResponse;
+        return ((GetPodiumResponse) podiumResponse).getResults();
     }
 }

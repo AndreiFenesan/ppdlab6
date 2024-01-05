@@ -34,7 +34,7 @@ public class Main {
 
         ExecutorService readThreads = Executors.newFixedThreadPool(12);
         ServerSocket socket = new ServerSocket(9998);
-        ConnectionManager connectionManager = new ConnectionManager(readThreads, finishedClients, socket, blockingQueue, noClients);
+        ConnectionManager connectionManager = new ConnectionManager(readThreads, finishedClients, socket, blockingQueue, noClients, linkedList);
         connectionManager.startListening();
 
         var start = System.currentTimeMillis();

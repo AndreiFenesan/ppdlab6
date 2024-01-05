@@ -2,10 +2,16 @@ package org.example;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static java.util.stream.Collectors.groupingBy;
 
 public class ConnectionManager {
     private int noClients;
@@ -13,14 +19,16 @@ public class ConnectionManager {
     private final AtomicInteger finishedClients;
     private final ServerSocket serverSocket;
     private final MyBlockingQueue myBlockingQueue;
+    private final MyLinkedList podiumList;
     private Thread worker;
 
-    public ConnectionManager(ExecutorService readThreads, AtomicInteger finishedClients, ServerSocket serverSocket, MyBlockingQueue myBlockingQueue, int noClients) {
+    public ConnectionManager(ExecutorService readThreads, AtomicInteger finishedClients, ServerSocket serverSocket, MyBlockingQueue myBlockingQueue, int noClients, MyLinkedList podiumList) {
         this.readThreads = readThreads;
         this.finishedClients = finishedClients;
         this.serverSocket = serverSocket;
         this.myBlockingQueue = myBlockingQueue;
         this.noClients = noClients;
+        this.podiumList = podiumList;
     }
 
 
@@ -33,13 +41,15 @@ public class ConnectionManager {
                     readThreads.submit(() -> {
                         try {
                             ObjectInputStream inputStream = new ObjectInputStream(client.getInputStream());
+                            ObjectOutputStream outputStream = new ObjectOutputStream(client.getOutputStream());
                             Object data;
                             do {
                                 data = inputStream.readObject();
                                 if (data instanceof BatchOfCompetitiorResult receivedData) {
                                     handleBatchResult(receivedData);
                                 } else if (data instanceof GetPodiumRequest) {
-                                    System.out.println("Request received");
+                                    System.out.println("podium request received");
+                                    handleGetPodiumRequest(outputStream);
                                 }
                             } while (!(data instanceof DoneRequest));
                         } catch (IOException e) {
@@ -62,9 +72,26 @@ public class ConnectionManager {
         thread.start();
     }
 
+    private void handleGetPodiumRequest(ObjectOutputStream outputStream) throws IOException {
+        var podium = podiumList.getPodium();
+        var byCountry = podium.stream().collect(groupingBy(node -> node.country));
+        List<CountryResult> results = new ArrayList<>();
+        for (var entry : byCountry.entrySet()) {
+            var country = entry.getKey();
+            var resultsPerCountry = entry.getValue();
+            var totalScore = resultsPerCountry.stream()
+                    .map(node -> node.totalScore)
+                    .reduce(0, Integer::sum);
+            results.add(new CountryResult(country, totalScore));
+        }
+        results.sort(Comparator.comparingInt(CountryResult::getTotalScore));
+        System.out.println("Sending podium");
+        outputStream.writeObject(new GetPodiumResponse(results));
+    }
+
     private void handleBatchResult(BatchOfCompetitiorResult receivedData) {
         var results = receivedData.getResultList();
-        System.out.println("Received size of: " + results.size());
+        System.out.println("Received size of: " + results.size() + " From: " + results.get(0).getCountry());
         if (!results.isEmpty()) {
             for (var result : results) {
                 myBlockingQueue.addToQueue(
