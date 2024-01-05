@@ -2,7 +2,7 @@ package org.example;
 
 import java.io.Serializable;
 
-public class CompetitorResult implements Request {
+public class CompetitorResult implements Serializable {
     private int id;
     private int score;
     private String country;

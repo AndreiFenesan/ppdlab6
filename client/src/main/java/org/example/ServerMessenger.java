@@ -8,18 +8,17 @@ import java.util.List;
 
 public class ServerMessenger {
 
-    Socket clientSocket;
+    ObjectOutputStream objectOutputStream;
     List<CompetitorResult> competitorResults;
 
-    public ServerMessenger(Socket clientSocket, List<CompetitorResult> competitorResults)
+    public ServerMessenger(ObjectOutputStream objectOutputStream, List<CompetitorResult> competitorResults)
     {
-        this.clientSocket = clientSocket;
+        this.objectOutputStream = objectOutputStream;
         this.competitorResults = competitorResults;
     }
 
     public void sendBatchToServer() throws IOException {
         BatchOfCompetitiorResult batchOfCompetitorResults = new BatchOfCompetitiorResult();
-        ObjectOutputStream objectOutputStream = new ObjectOutputStream(clientSocket.getOutputStream());
 
         int noTimes = competitorResults.size() % 20 == 0 ?
                 competitorResults.size() / 20 : competitorResults.size() / 20 + 1;
@@ -48,7 +47,6 @@ public class ServerMessenger {
     }
 
     public void sendProvisionalPodiumRequest() throws IOException {
-        ObjectOutputStream objectOutputStream = new ObjectOutputStream(clientSocket.getOutputStream());
         System.out.println("Sending request for podium");
         objectOutputStream.writeObject(new GetPodiumRequest());
         objectOutputStream.flush();

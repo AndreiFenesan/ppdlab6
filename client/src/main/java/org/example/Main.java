@@ -20,12 +20,13 @@ public class Main {
             for (int i = 1; i <= numberOfFiles; i++) {
                 List<CompetitorResult> competitorResults = new ArrayList<>();
 
+
                 var path = resultsFolder + "/" + country + "/" + "ResultC" + "_P" + i + ".txt";
                 fileReader.readFileAndAddToList(competitorResults, path, country);
 
                 System.out.println(competitorResults.size());
-
-                ServerMessenger serverMessenger = new ServerMessenger(clientSocket, competitorResults);
+                ObjectOutputStream objectOutputStream = new ObjectOutputStream(clientSocket.getOutputStream());
+                ServerMessenger serverMessenger = new ServerMessenger(objectOutputStream, competitorResults);
 
                 serverMessenger.sendBatchToServer();
 
