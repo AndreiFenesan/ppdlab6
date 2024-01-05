@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.concurrent.locks.ReentrantLock;
@@ -84,7 +85,9 @@ public class MyLinkedList {
         for (var lockingNode : nodes) {
             podium.add(new Node(lockingNode.getId(), lockingNode.getTotalValue(), lockingNode.getCountry()));
         }
+        podium.sort(Comparator.comparingInt(a -> a.totalScore));
         podiumLock.unlock();
         return podium;
     }
+
 }

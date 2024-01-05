@@ -25,8 +25,9 @@ public class Main {
         }
     }
 
-    public static void main(String[] args) throws InterruptedException, IOException, ClassNotFoundException {
+    public static void main(String[] args) throws IOException {
         int noClients = 2;
+        long podiumCacheExpiration = 2L;
         int workingThreads = 4;
         var finishedClients = new AtomicInteger(0);
         MyBlockingQueue blockingQueue = new MyBlockingQueue(finishedClients, 100, noClients);
@@ -34,28 +35,10 @@ public class Main {
 
         ExecutorService readThreads = Executors.newFixedThreadPool(12);
         ServerSocket socket = new ServerSocket(9998);
-        ConnectionManager connectionManager = new ConnectionManager(readThreads, finishedClients, socket, blockingQueue, noClients, linkedList);
+        ConnectionManager connectionManager = new ConnectionManager(readThreads, finishedClients, socket, blockingQueue, noClients, linkedList,podiumCacheExpiration);
         connectionManager.startListening();
 
         var start = System.currentTimeMillis();
-
-//        for (int i = 1; i <= 5; i++) {
-//            for (int j = 1; j <= 10; j++) {
-//                var path = basePath + "RezultateC" + i + "_P" + j + ".txt";
-//                int finalI = i;
-//                readThreads.execute(() -> {
-//                    try {
-//                        readFileAndAddToQueue(blockingQueue, path, "C" + finalI);
-//                        var count = finishedClients.incrementAndGet();
-//                        if (count == 50) {
-//                            blockingQueue.signal();
-//                        }
-//                    } catch (IOException e) {
-//                        System.out.println("ERROR thr");
-//                    }
-//                });
-//            }
-//        }
 
         var thrArr = new ArrayList<Thread>();
         var fraud = new ConcurrentHashMap<Integer, Boolean>();
@@ -82,7 +65,6 @@ public class Main {
         }
 //        readThreads.shutdown();
 //        while (!readThreads.awaitTermination(10, TimeUnit.SECONDS)) ;
-        blockingQueue.signal();
         thrArr.forEach(thread -> {
             try {
                 thread.join();
