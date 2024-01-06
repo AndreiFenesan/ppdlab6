@@ -26,4 +26,9 @@ public class CountryResult implements Serializable {
     public void setTotalScore(Integer totalScore) {
         this.totalScore = totalScore;
     }
+
+    @Override
+    public String toString() {
+        return country + " " + totalScore;
+    }
 }

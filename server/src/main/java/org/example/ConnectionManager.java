@@ -153,7 +153,7 @@ public class ConnectionManager {
         }
     }
 
-    private GetFinalResultsResponse getFinalResult() throws ExecutionException, InterruptedException {
+    public GetFinalResultsResponse getFinalResult() throws ExecutionException, InterruptedException {
         var podium = podiumList.getPodium();
         var country = getPodiumByCountry();
         var podiumDto = new ArrayList<CompetitorResult>();

@@ -1,32 +1,45 @@
 package org.example;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main {
-    private static void readFileAndAddToQueue(MyBlockingQueue readNodes, String fileName, String country) throws IOException {
-        var filePath = Paths.get(fileName);
-        try (var buff = Files.newBufferedReader(filePath)) {
-            buff.lines()
-                    .forEach(line -> {
-                        var data = line.split(" ");
-                        Node node = new Node(Integer.parseInt(data[0]), Integer.parseInt(data[1]), country);
-                        readNodes.addToQueue(node);
-                    });
-        } catch (Exception e) {
-            System.out.println(e);
+    private static void writeToFile(String filePath, GetFinalResultsResponse finalResults) throws IOException {
+        var pathCountry = Paths.get(filePath + "/country");
+        var pathAll = Paths.get(filePath + "/all");
+        try (var writer = Files.newBufferedWriter(pathCountry)) {
+            var byCountry = finalResults.getCountryResults();
+            byCountry.forEach(countryResult -> {
+                try {
+                    writer.write(countryResult.toString());
+                    writer.write('\n');
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
+
+        try (var writer = Files.newBufferedWriter(pathAll)) {
+            var allResults = finalResults.getCompetitorsResultList();
+            allResults.forEach(result -> {
+                try {
+                    writer.write(result.toString());
+                    writer.write('\n');
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
         }
     }
 
-    public static void main(String[] args) throws IOException {
-        int noClients = 2;
+    public static void main(String[] args) throws IOException, InterruptedException, ExecutionException {
+        int noClients = 3;
         long podiumCacheExpiration = 2L;
         int workingThreads = 4;
         var finishedClients = new AtomicInteger(0);
@@ -35,7 +48,7 @@ public class Main {
 
         ExecutorService readThreads = Executors.newFixedThreadPool(12);
         ServerSocket socket = new ServerSocket(9998);
-        ConnectionManager connectionManager = new ConnectionManager(readThreads, finishedClients, socket, blockingQueue, noClients, linkedList,podiumCacheExpiration);
+        ConnectionManager connectionManager = new ConnectionManager(readThreads, finishedClients, socket, blockingQueue, noClients, linkedList, podiumCacheExpiration);
         connectionManager.startListening();
 
         var start = System.currentTimeMillis();
@@ -63,8 +76,7 @@ public class Main {
             thr.start();
             thrArr.add(thr);
         }
-//        readThreads.shutdown();
-//        while (!readThreads.awaitTermination(10, TimeUnit.SECONDS)) ;
+
         thrArr.forEach(thread -> {
             try {
                 thread.join();
@@ -72,13 +84,15 @@ public class Main {
                 System.out.println("Error in waiting");
             }
         });
+
         connectionManager.waitForClients();
+        writeToFile("/home/andrei/Desktop/an3_sem1/prog_paralela_si_distribuita/lab6Output", connectionManager.getFinalResult());
+
+        readThreads.shutdown();
+        while (!readThreads.awaitTermination(10, TimeUnit.SECONDS)) ;
 
         System.out.println("Main thread done");
-
-//        linkedList.showPodium(outputPath);
-//
-//        var end = System.currentTimeMillis();
-//        System.out.println(end - start);
+        var end = System.currentTimeMillis();
+        System.out.println(end - start);
     }
 }
